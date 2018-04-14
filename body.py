@@ -58,10 +58,18 @@ while(1):
 #        for (ex, ey, ew, eh) in eyes:
 #            cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 127, 255), 2)
 
-    fgmask = fgbg.apply(frame)
+#    fgmask = fgbg.apply(frame)
+#    final = np.absolute(frame - fgmask)
+    original_image = frame
+    gray_original = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
+    background_image = cv2.imread('background.png', cv2.IMREAD_COLOR)
+    gray_background = cv2.cvtColor(background_image, cv2.COLOR_BGR2GRAY)
+
+    foreground = np.absolute(gray_original - gray_background)
+    foreground[foreground > 0] = 255
 
     # Display an image in a window
-    cv2.imshow('EagleEye', fgmask)
+    cv2.imshow('EagleEye', foreground)
 
     # Wait for Esc key to stop
     k = cv2.waitKey(30) & 0xff

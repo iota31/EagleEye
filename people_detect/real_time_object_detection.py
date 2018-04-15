@@ -1,6 +1,9 @@
 # USAGE
 # python real_time_object_detection.py --prototxt MobileNetSSD_deploy.prototxt.txt --model MobileNetSSD_deploy.caffemodel
 
+import sys, os
+sys.path.append(os.getcwd())
+import push_to_db
 # import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
@@ -10,6 +13,8 @@ import imutils
 import time
 import cv2
 from datetime import datetime
+
+DATABASE = 'db.sqlite3'
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -41,7 +46,9 @@ time.sleep(2.0)
 fps = FPS().start()
 
 # loop over the frames from the video stream
-while True:
+#while True:
+
+while count in range(0,10):
     # grab the frame from the threaded video stream and resize it
     # to have a maximum width of 400 pixels
     t1 = datetime.now()
@@ -98,6 +105,10 @@ while True:
             cv2.putText(frame, label, (startX, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     print "number of people detected", person_count
+    print "Pushing into database: %s"%DATABASE
+    db = push_to_db.Db
+    room_no = 1
+    db.update(DATABASE,room_no, person_count)
     #print "all detections", all
     # show the output frame
     cv2.imshow("Frame", frame)

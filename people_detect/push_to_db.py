@@ -18,12 +18,13 @@ class Queue:
     def size(self):
         return len(self.items)
 
-class Db(_name):
-    def __init__(self,_name):
-        conn = sqlite3.connect(_name)
-        print "Opened database %s"%_name
+class Db:
+    def __init__(self):
+        pass
 
     def create(self, _name):
+        conn = sqlite3.connect(_name)
+        print "Opened database %s"%_name
         conn.execute('''CREATE TABLE Iris_master
                     (Room INT PRIMARY KEY NOT NULL,
                     Name TEXT NOT NULL,
@@ -31,6 +32,8 @@ class Db(_name):
                     Occupied INTi)''')
 
     def update(self, _name, room, new_occupied):
+        conn = sqlite3.connect(_name)
+        print "Opened database %s"%_name
         conn.execute('''UPDATE Iris_Master
                     SET Occupied = ? WHERE Room = ?''',
                     (new_occupied, room))

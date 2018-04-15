@@ -13,6 +13,8 @@ import imutils
 import time
 import cv2
 from datetime import datetime
+from collections import Counter
+from itertools import takewhile
 # from .models import Master
 import push_to_db
 
@@ -105,11 +107,23 @@ while count in range(0, 10):
             cv2.putText(frame, label, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     print "Number of people detected: ", person_count
+
+    queue = push_to_db.Queue()
+    queue.enqueue(person_count)
+
+    if queue.size() == 50:
+	queue.dequeue()
+
+    freq = Counter(queue)
+    mostfreq = freq.most_common()
+    mode = list(takewhile(lambda _x : _x[1] == mostfreq[0][1],mostfreq))
+    max_mode = mode[-1][0]
+
     print "Pushing into database: %s" % DATABASE
     db = push_to_db.Db(DATABASE)
     room_no = 1
     print "Updating the database: %s" % DATABASE
-    db.update(room_no, person_count)
+    db.update(room_no, max_mode)
     # db.select()
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF

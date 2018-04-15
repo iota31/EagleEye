@@ -18,6 +18,9 @@ class Queue:
     def size(self):
         return len(self.items)
 
+    def get(self):
+        return self.items
+
 class Db:
     _name = None  # type: object
 

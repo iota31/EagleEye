@@ -34,7 +34,8 @@ class Db:
     def update(self, _name, room, new_occupied):
         conn = sqlite3.connect(_name)
         print "Opened database %s"%_name
-        conn.execute("UPDATE Iris_master SET Occupied = %d WHERE Room = %d" %(new_occupied, room))
+        cur = conn.cursor()
+        cur.execute('''UPDATE Iris_master SET Occupied = ? WHERE Room = ?''', (new_occupied, room))
 
 #    def select(self, _name, room, new_occupied):
 #        cursor = conn.execute('''SELECT Room, Name, Occupancy, 

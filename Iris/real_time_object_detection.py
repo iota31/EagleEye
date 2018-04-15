@@ -15,7 +15,7 @@ from datetime import datetime
 #from .models import Master
 import push_to_db
 
-DATABASE = '/home/tushar/PycharmProjects/EagleEye/db.sqlite3'
+DATABASE = os.path.join(os.getcwd(),'..','db.sqlite3')
 
 
 # construct the argument parse and parse the arguments

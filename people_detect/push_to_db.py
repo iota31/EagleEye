@@ -20,6 +20,7 @@ class Queue:
 
 class Db:
     def __init__(self):
+        pass
 
     def create(self, _name):
         conn = sqlite3.connect(_name)

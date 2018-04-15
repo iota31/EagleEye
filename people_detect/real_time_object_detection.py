@@ -47,7 +47,7 @@ fps = FPS().start()
 
 # loop over the frames from the video stream
 #while True:
-
+count = 0
 while count in range(0,10):
     # grab the frame from the threaded video stream and resize it
     # to have a maximum width of 400 pixels

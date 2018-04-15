@@ -19,21 +19,21 @@ class Queue:
         return len(self.items)
 
 class Db:
-    def __init__(self):
-        pass
+    def __init__(self, _name):
+        self._name = _name
 
-    def create(self, _name):
-        conn = sqlite3.connect(_name)
-        print "Opened database %s"%_name
+    def create(self):
+        conn = sqlite3.connect(self._name)
+        print "Opened database %s"%(self._name)
         conn.execute('''CREATE TABLE Iris_master
                     (Room INT PRIMARY KEY NOT NULL,
                     Name TEXT NOT NULL,
                     Occupany INT NOT NULL,
                     Occupied INTi)''')
 
-    def update(self, _name, room, new_occupied):
-        conn = sqlite3.connect(_name)
-        print "Opened database %s"%_name
+    def update(self, room, new_occupied):
+        conn = sqlite3.connect(self._name)
+        print "Opened database %s"%(self._name)
         cur = conn.cursor()
         cur.execute('''UPDATE Iris_master SET Occupied = ? WHERE Room = ?''', (new_occupied, room))
 

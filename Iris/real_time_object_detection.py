@@ -108,10 +108,10 @@ while count in range(0,10):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     print "number of people detected", person_count
     print "Pushing into database: %s"%DATABASE
-    db = push_to_db.Db()
+    db = push_to_db.Db(DATABASE)
     print db
     room_no = 1
-    db.update(DATABASE,room_no, person_count)
+    db.update(room_no, person_count)
     print "updating the database"
     #Master.objects.get(Room=room_no).update(Occupied=person_count)
     #print "all detections", all

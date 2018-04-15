@@ -18,8 +18,8 @@ class Queue:
     def size(self):
         return len(self.items)
 
-class Db:
-    def __init__(self):
+class Db(_name):
+    def __init__(self,_name):
         conn = sqlite3.connect(_name)
         print "Opened database %s"%_name
 

@@ -108,16 +108,19 @@ while count in range(0, 10):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
     print "Number of people detected: ", person_count
 
-    queue = push_to_db.Queue()
-    queue.enqueue(person_count)
+    p_queue = push_to_db.Queue()
+    p_queue.enqueue(person_count)
 
-    if queue.size() == 50:
-	queue.dequeue()
+    if p_queue.size() == 50:
+	p_queue.dequeue()
 
-    freq = Counter(queue)
-    mostfreq = freq.most_common()
-    mode = list(takewhile(lambda _x : _x[1] == mostfreq[0][1],mostfreq))
-    max_mode = mode[-1][0]
+        freq = Counter(p_queue)
+        mostfreq = freq.most_common()
+        mode = list(takewhile(lambda _x : _x[1] == mostfreq[0][1],mostfreq))
+        max_mode = mode[-1][0]
+    
+    else:
+        max_mode = person_count
 
     print "Pushing into database: %s" % DATABASE
     db = push_to_db.Db(DATABASE)

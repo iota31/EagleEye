@@ -6,6 +6,9 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponse
 from .models import Master
+from .serializers import serialize
+
+import json
 
 
 def index(request):
@@ -14,4 +17,21 @@ def index(request):
 
 def home(request):
     posts = Master.objects.all()
-    return render(request, 'home.html', {'posts' : posts})
+    # print "here are the posts\n" + posts
+    return render(request, 'home.html', {'posts': posts})
+
+
+# TODO
+def popup(request):
+    return render(request, 'help_popup.html')
+
+
+def ajax_up(request):
+    posts = Master.objects.all()
+    data = serialize('json', posts)
+    data_temp = json.loads(data)
+    data = json.dumps(data_temp)
+
+    print data
+    return HttpResponse(data, content_type='application/json')
+

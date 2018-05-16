@@ -15,4 +15,4 @@ class Master(models.Model):
     Occupied = models.IntegerField(blank=False, default=0)
 
     def __str__(self):
-        return "%s : %s" %(self.Room, self.Name)
+        return self.Room

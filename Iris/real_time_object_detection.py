@@ -26,7 +26,7 @@ ap.add_argument("-p", "--prototxt", required=True,
                 help="path to Caffe 'deploy' prototxt file")
 ap.add_argument("-m", "--model", required=True,
                 help="path to Caffe pre-trained model")
-ap.add_argument("-c", "--confidence", type=float, default=0.2,
+ap.add_argument("-c", "--confidence", type=float, default=0.3,
                 help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
@@ -46,13 +46,14 @@ net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 # and initialize the FPS counter
 print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
-time.sleep(2.0)
+time.sleep(2)
+#time.sleep(1)
 fps = FPS().start()
 
 # loop over the frames from the video stream
-# while True:
-count = 0
-while count in range(0, 10):
+while True:
+#count = 0
+#while count in range(0, 10):
     # grab the frame from the threaded video stream and resize it
     # to have a maximum width of 400 pixels
     t1 = datetime.now()
@@ -111,27 +112,26 @@ while count in range(0, 10):
     p_queue = push_to_db.Queue()
     p_queue.enqueue(person_count)
 
-    if p_queue.size() == 50:
-	p_queue.dequeue()
-
+    if p_queue.size() == 30:
+        p_queue.dequeue()
         freq = Counter(p_queue)
         mostfreq = freq.most_common()
         mode = list(takewhile(lambda _x : _x[1] == mostfreq[0][1],mostfreq))
         max_mode = mode[-1][0]
-    
+
     else:
         max_mode = person_count
 
     print "Pushing into database: %s" % DATABASE
     db = push_to_db.Db(DATABASE)
-    room_no = 1
+    room_no = 5
     print "Updating the database: %s" % DATABASE
     db.update(room_no, max_mode)
     # db.select()
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
 
-    time.sleep(1)
+    time.sleep(1.5)
     t2 = datetime.now()
     print 'Frame processing time: ', (t2 - t1)
     # if the `q` key was pressed, break from the loop
@@ -140,7 +140,7 @@ while count in range(0, 10):
 
     # update the FPS counter
     fps.update()
-    count += 1
+    #count += 1
 
 # stop the timer and display FPS information
 fps.stop()

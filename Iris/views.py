@@ -32,6 +32,6 @@ def ajax_up(request):
     data_temp = json.loads(data)
     data = json.dumps(data_temp)
 
-    print data
+    print (data)
     return HttpResponse(data, content_type='application/json')
 

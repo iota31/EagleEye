@@ -1,9 +1,9 @@
 # USAGE
 # python real_time_object_detection.py --prototxt MobileNetSSD_deploy.prototxt.txt --model MobileNetSSD_deploy.caffemodel
 
-import sys, os
-
-sys.path.append(os.getcwd())
+import os
+import push_to_db
+#sys.path.append(os.getcwd())
 # import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
@@ -15,8 +15,8 @@ import cv2
 from datetime import datetime
 from collections import Counter
 from itertools import takewhile
-# from .models import Master
-import push_to_db
+#from .models import Master
+
 
 DATABASE = os.path.join(os.getcwd(), '..', 'db.sqlite3')
 
@@ -45,7 +45,7 @@ net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 # initialize the video stream, allow the cammera sensor to warmup,
 # and initialize the FPS counter
 print("[INFO] starting video stream...")
-vs = VideoStream(src=0).start()
+vs = VideoStream(src="rtsp://172.20.3.13/av0_0").start()
 time.sleep(2)
 #time.sleep(1)
 fps = FPS().start()
@@ -96,18 +96,18 @@ while True:
                 person_count += 1
             # if idx != 15:
             #    break
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (startX, startY, endX, endY) = box.astype("int")
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                (startX, startY, endX, endY) = box.astype("int")
 
             # draw the prediction on the frame
-            label = "{}: {:.2f}%".format(CLASSES[idx],
+                label = "{}: {:.2f}%".format(CLASSES[idx],
                                          confidence * 100)
-            cv2.rectangle(frame, (startX, startY), (endX, endY),
+                cv2.rectangle(frame, (startX, startY), (endX, endY),
                           COLORS[idx], 2)
-            y = startY - 15 if startY - 15 > 15 else startY + 15
-            cv2.putText(frame, label, (startX, y),
+                y = startY - 15 if startY - 15 > 15 else startY + 15
+                cv2.putText(frame, label, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-    print "Number of people detected: ", person_count
+    print ("Number of people detected: ", person_count)
 
     p_queue = push_to_db.Queue()
     p_queue.enqueue(person_count)
@@ -122,10 +122,10 @@ while True:
     else:
         max_mode = person_count
 
-    print "Pushing into database: %s" % DATABASE
+    print ("Pushing into database: %s" % DATABASE)
     db = push_to_db.Db(DATABASE)
     room_no = 5
-    print "Updating the database: %s" % DATABASE
+    print ("Updating the database: %s" % DATABASE)
     db.update(room_no, max_mode)
     # db.select()
     cv2.imshow("Frame", frame)
@@ -133,7 +133,7 @@ while True:
 
     time.sleep(1.5)
     t2 = datetime.now()
-    print 'Frame processing time: ', (t2 - t1)
+    print ('Frame processing time: ', (t2 - t1))
     # if the `q` key was pressed, break from the loop
     if key == ord("q"):
         break

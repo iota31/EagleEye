@@ -47,13 +47,5 @@ class Db:
         conn = sqlite3.connect(self._name)
         print ("Opened database %s" % (self._name))
         cur = conn.cursor()
-        cur.execute('''SELECT Room, Name, Occupancy, 
-                    Occupied from Iris_master''')
+        cur.execute('''SELECT Room, Occupied from Iris_master''')
         print (cur.fetchall())
-#def main():
-#    queue = Queue()
-#
-##    db = Db.create('test.db')
-#
-#if __name__ == "__main__":
-#    main()

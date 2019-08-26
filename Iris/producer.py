@@ -11,6 +11,12 @@ def get_data(DATABASE):
     db = push_to_db.Db(DATABASE)
     return db.select()
 
+def Convert(tup):
+    di = {}
+    for a, b in tup:
+        di.setdefault(a, []).append(b)
+    return di
+
 def main(DATABASE):
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BROKER_URL,
@@ -19,8 +25,10 @@ def main(DATABASE):
 
     while True:
         data = get_data(DATABASE)
-        producer.send(KAFKA_TOPIC, value=data)
-        print(data)
+        print("Data: ",data)
+        _dict = Convert(data)
+        print("Dict:", _dict)
+        producer.send(KAFKA_TOPIC, value=_dict)
         sleep(10)
 
 #if __name__ == "__main__":

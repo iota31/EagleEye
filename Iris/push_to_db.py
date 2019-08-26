@@ -48,4 +48,4 @@ class Db:
         print ("Opened database %s" % (self._name))
         cur = conn.cursor()
         cur.execute('''SELECT Room, Occupied from Iris_master''')
-        print (cur.fetchall())
+        return (cur.fetchall())

@@ -21,8 +21,8 @@ from multiprocessing import Process
 
 DATABASE = os.path.join(os.getcwd(), '..', 'db.sqlite3')
 
-# send the database name to producer kafka
-#producer.main(DATABASE)
+# send the database to kafka producer
+Process(target = producer.main, kwargs={"DATABASE" : DATABASE}).start()
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--prototxt", required=True,
@@ -42,7 +42,7 @@ args = vars(ap.parse_args())
 config = args["config"]
 _dict_of_ips = __import__(config)
 
-print(_dict_of_ips.ips)
+#print(_dict_of_ips.ips)
 
 # initialize the list of class labels MobileNet SSD was trained to
 # detect, then generate a set of bounding box colors for each class

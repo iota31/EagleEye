@@ -1,5 +1,5 @@
 # USAGE
-# python real_time_object_detection.py --prototxt MobileNetSSD_deploy.prototxt.txt --model MobileNetSSD_deploy.caffemodel --conf_file eagleye_conf
+# python real_time_object_detection.py --prototxt MobileNetSSD_deploy.prototxt.txt --model MobileNetSSD_deploy.caffemodel --config eagleye_conf
 
 import os
 import push_to_db
@@ -20,6 +20,7 @@ import producer
 from multiprocessing import Process
 
 DATABASE = os.path.join(os.getcwd(), '..', 'db.sqlite3')
+MAX_PROCESSES = 2
 
 # send the database to kafka producer
 Process(target = producer.main, kwargs={"DATABASE" : DATABASE}).start()
@@ -66,63 +67,63 @@ def detect(ip, room_no):
         fps = FPS().start()
 
         # loop over the frames from the video stream
-        while True:
+#        while True:
         #count = 0
         #while count in range(0, 10):
-            # grab the frame from the threaded video stream and resize it
-            # to have a maximum width of 400 pixels
-            t1 = datetime.now()
-            frame = vs.read()
-            frame = imutils.resize(frame, width=400)
+        # grab the frame from the threaded video stream and resize it
+        # to have a maximum width of 400 pixels
+        t1 = datetime.now()
+        frame = vs.read()
+        frame = imutils.resize(frame, width=400)
 
-            # grab the frame dimensions and convert it to a blob
-            (h, w) = frame.shape[:2]
-            blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-                                         0.007843, (300, 300), 127.5)
+        # grab the frame dimensions and convert it to a blob
+        (h, w) = frame.shape[:2]
+        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
+                                     0.007843, (300, 300), 127.5)
 
-            # pass the blob through the network and obtain the detections and
-            # predictions
-            net.setInput(blob)
-            detections = net.forward()
-            # print "here are the detections"
-            # print detections
-            # print "here are the np.arrange"
-            # print np.arange(0, detections.shape[2])
-            # print "confidence"
-            # for i in np.arange(0, detections.shape[2]):
-            #    print detections[0, 0, i, 2]
-            # time.sleep(2000)
-            person_count = 0
-            # loop over the detections
-            for i in np.arange(0, detections.shape[2]):
+        # pass the blob through the network and obtain the detections and
+        # predictions
+        net.setInput(blob)
+        detections = net.forward()
+        # print "here are the detections"
+        # print detections
+        # print "here are the np.arrange"
+        # print np.arange(0, detections.shape[2])
+        # print "confidence"
+        # for i in np.arange(0, detections.shape[2]):
+        #    print detections[0, 0, i, 2]
+        # time.sleep(2000)
+        person_count = 0
+        # loop over the detections
+        for i in np.arange(0, detections.shape[2]):
 
-                # extract the confidence (i.e., probability) associated with
-                # the prediction
-                confidence = detections[0, 0, i, 2]
+            # extract the confidence (i.e., probability) associated with
+            # the prediction
+            confidence = detections[0, 0, i, 2]
 
-                # filter out weak detections by ensuring the `confidence` is
-                # greater than the minimum confidence
-                if confidence > args["confidence"]:
-                    # extract the index of the class label from the
-                    # `detections`, then compute the (x, y)-coordinates of
-                    # the bounding box for the object
-                    idx = int(detections[0, 0, i, 1])
-                    if CLASSES[idx] == "person":
-                        person_count += 1
-                    # if idx != 15:
-                    #    break
-                        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                        (startX, startY, endX, endY) = box.astype("int")
+            # filter out weak detections by ensuring the `confidence` is
+            # greater than the minimum confidence
+            if confidence > args["confidence"]:
+                # extract the index of the class label from the
+                # `detections`, then compute the (x, y)-coordinates of
+                # the bounding box for the object
+                idx = int(detections[0, 0, i, 1])
+                if CLASSES[idx] == "person":
+                    person_count += 1
+                # if idx != 15:
+                #    break
+                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                    (startX, startY, endX, endY) = box.astype("int")
 
-                    # draw the prediction on the frame
-                        label = "{}: {:.2f}%".format(CLASSES[idx],
-                                                 confidence * 100)
-                        cv2.rectangle(frame, (startX, startY), (endX, endY),
-                                  COLORS[idx], 2)
-                        y = startY - 15 if startY - 15 > 15 else startY + 15
-                        cv2.putText(frame, label, (startX, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-            print ("Number of people detected: ", person_count)
+                # draw the prediction on the frame
+                    label = "{}: {:.2f}%".format(CLASSES[idx],
+                                             confidence * 100)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY),
+                              COLORS[idx], 2)
+                    y = startY - 15 if startY - 15 > 15 else startY + 15
+                    cv2.putText(frame, label, (startX, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+            print ("Number of people detected in %s: %s" %(ip, person_count))
 
             p_queue = push_to_db.Queue()
             p_queue.enqueue(person_count)
@@ -159,13 +160,31 @@ def detect(ip, room_no):
 
         # stop the timer and display FPS information
         fps.stop()
+        print("Finishing: ", ip)
         print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
         print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
         # do a bit of cleanup
         cv2.destroyAllWindows()
         vs.stop()
+        print("====END OF FUNCTION====")
 
 if __name__ == "__main__":
-    for key in _dict_of_ips.ips:
-        Process(target=detect, kwargs={"room_no" : key, "ip" : _dict_of_ips.ips[key]}).start()
+    while True:
+        process_list=[]
+        #dict_len = list(range(len(_dict_of_ips.ips)))
+        #print(dict_len)
+        print(_dict_of_ips.ips)
+        for key in _dict_of_ips.ips:
+            process_list.append(Process(target=detect, kwargs={"room_no" : key, "ip" : _dict_of_ips.ips[key]}))
+        print(process_list)
+        ultimate_proc_list = [process_list[i:i + MAX_PROCESSES] for i in range(0, len(process_list), MAX_PROCESSES)]
+        print(ultimate_proc_list)
+        for _proc_list in ultimate_proc_list:
+            for i in range(MAX_PROCESSES):
+                print("Creating: ", _proc_list[i])
+                #_proc_list[i].daemon = True
+                _proc_list[i].start()
+            for j in range(MAX_PROCESSES):
+                print("waiting to join ", _proc_list[j])
+                _proc_list[j].join()

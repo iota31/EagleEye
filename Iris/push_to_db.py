@@ -29,7 +29,7 @@ class Db:
 
     def create(self):
         conn = sqlite3.connect(self._name)
-        print ("Opened database %s"%(self._name))
+        print ("Creating database %s"%(self._name))
         cur = conn.cursor()
         cur.execute('''CREATE TABLE Iris_master
                     (Room INT PRIMARY KEY NOT NULL,
@@ -39,13 +39,13 @@ class Db:
 
     def update(self, room, new_occupied):
         conn = sqlite3.connect(self._name)
-        print ("Opened database %s" % self._name)
+        print ("Updating database %s for room: %s occupied: %s" % (self._name, room, new_occupied))
         conn.execute('''UPDATE Iris_master SET Occupied = ? WHERE Room = ?''', (new_occupied, room))
         conn.commit()
 
     def select(self):
         conn = sqlite3.connect(self._name)
-        print ("Opened database %s" % (self._name))
+        print ("Fetching all from database %s" % (self._name))
         cur = conn.cursor()
         cur.execute('''SELECT Room, Occupied from Iris_master''')
         return (cur.fetchall())

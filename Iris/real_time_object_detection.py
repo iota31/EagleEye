@@ -15,12 +15,21 @@ import cv2
 from datetime import datetime
 from collections import Counter
 from itertools import takewhile
-#from .models import Master
 import producer
-from multiprocessing import Process
+from multiprocessing import Process, Pool
+import logging
+from logging.handlers import RotatingFileHandler
+import sys
+
+log_file_path=os.path.join("/var", "log")
+log_file="eagle_eye.log"
+logger = logging.getLogger("Rotating Log")
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(os.path.join(log_file_path,log_file),
+    maxBytes=50000000,backupCount=5)
+logger.addHandler(handler)
 
 DATABASE = os.path.join(os.getcwd(), '..', 'db.sqlite3')
-MAX_PROCESSES = 2
 
 # send the database to kafka producer
 Process(target = producer.main, kwargs={"DATABASE" : DATABASE}).start()
@@ -41,9 +50,13 @@ args = vars(ap.parse_args())
 
 # read from conf file
 config = args["config"]
-_dict_of_ips = __import__(config)
+_conf = __import__(config)
 
-#print(_dict_of_ips.ips)
+try:
+    MAX_PROCESSES = _conf.MAX_PROCESSES
+except AttributeError as _ae:
+    logger.info("MAX_PROCESSES not found in conf file. Defaulting to 2.")
+    MAX_PROCESSES = 2
 
 # initialize the list of class labels MobileNet SSD was trained to
 # detect, then generate a set of bounding box colors for each class
@@ -54,13 +67,13 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # load our serialized model from disk
-print("[INFO] loading model...")
+logger.info("[INFO] loading model...")
 net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
 def detect(ip, room_no):
         # initialize the video stream, allow the cammera sensor to warmup,
         # and initialize the FPS counter
-        print("[INFO] starting video stream...")
+        logger.info("====[INFO] starting video stream for %s====" %ip)
         vs = VideoStream(src=ip).start()
         time.sleep(2)
         #time.sleep(1)
@@ -123,7 +136,7 @@ def detect(ip, room_no):
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-            print ("Number of people detected in %s: %s" %(ip, person_count))
+            logger.info("Number of people detected in %s: %s" %(ip, person_count))
 
             p_queue = push_to_db.Queue()
             p_queue.enqueue(person_count)
@@ -138,9 +151,9 @@ def detect(ip, room_no):
             else:
                 max_mode = person_count
 
-            print ("Pushing into database: %s" % DATABASE)
+            #logger.info("Pushing into database: %s" % DATABASE)
             db = push_to_db.Db(DATABASE)
-            print ("Updating the database: %s" % DATABASE)
+            #logger.info("Updating the database: %s" % DATABASE)
             db.update(room_no, max_mode)
             # db.select()
             if args["debug"]:
@@ -149,7 +162,7 @@ def detect(ip, room_no):
 
             time.sleep(1.5)
             t2 = datetime.now()
-            print ('Frame processing time: ', (t2 - t1))
+            #logger.info('Frame processing time: ', (t2 - t1))
             # if the `q` key was pressed, break from the loop
             #if key == ord("q"):
             #    break
@@ -160,31 +173,15 @@ def detect(ip, room_no):
 
         # stop the timer and display FPS information
         fps.stop()
-        print("Finishing: ", ip)
-        print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
-        print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+        #logger.info("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
+        #logger.info("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
         # do a bit of cleanup
         cv2.destroyAllWindows()
         vs.stop()
-        print("====END OF FUNCTION====")
+        logger.info("====END OF FUNCTION====: %s" %ip)
 
 if __name__ == "__main__":
+    pool = Pool(processes=MAX_PROCESSES)
     while True:
-        process_list=[]
-        #dict_len = list(range(len(_dict_of_ips.ips)))
-        #print(dict_len)
-        print(_dict_of_ips.ips)
-        for key in _dict_of_ips.ips:
-            process_list.append(Process(target=detect, kwargs={"room_no" : key, "ip" : _dict_of_ips.ips[key]}))
-        print(process_list)
-        ultimate_proc_list = [process_list[i:i + MAX_PROCESSES] for i in range(0, len(process_list), MAX_PROCESSES)]
-        print(ultimate_proc_list)
-        for _proc_list in ultimate_proc_list:
-            for i in range(MAX_PROCESSES):
-                print("Creating: ", _proc_list[i])
-                #_proc_list[i].daemon = True
-                _proc_list[i].start()
-            for j in range(MAX_PROCESSES):
-                print("waiting to join ", _proc_list[j])
-                _proc_list[j].join()
+        results = [pool.apply_async(detect, (_conf.ips[key], key)) for key in _conf.ips]
